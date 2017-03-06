@@ -106,24 +106,19 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
 
   protected static class ReactWebViewClient extends WebViewClient {
 
-    private boolean mLastLoadFailed = false;
-
     @Override
     public void onPageFinished(WebView webView, String url) {
       super.onPageFinished(webView, url);
 
-      if (!mLastLoadFailed) {
-        ReactWebView reactWebView = (ReactWebView) webView;
-        reactWebView.callInjectedJavaScript();
-        reactWebView.linkBridge();
-        emitFinishEvent(webView, url);
-      }
+      ReactWebView reactWebView = (ReactWebView) webView;
+      reactWebView.callInjectedJavaScript();
+      reactWebView.linkBridge();
+      emitFinishEvent(webView, url);
     }
 
     @Override
     public void onPageStarted(WebView webView, String url, Bitmap favicon) {
       super.onPageStarted(webView, url, favicon);
-      mLastLoadFailed = false;
 
       dispatchEvent(
           webView,
@@ -156,7 +151,6 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
         String description,
         String failingUrl) {
       super.onReceivedError(webView, errorCode, description, failingUrl);
-      mLastLoadFailed = true;
 
       // In case of an error JS side expect to get a finish event first, and then get an error event
       // Android WebView does it in the opposite way, so we need to simulate that behavior
@@ -196,7 +190,7 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
       // Don't use webView.getUrl() here, the URL isn't updated to the new value yet in callbacks
       // like onPageFinished
       event.putString("url", url);
-      event.putBoolean("loading", !mLastLoadFailed && webView.getProgress() != 100);
+      event.putBoolean("loading", webView.getProgress() != 100);
       event.putString("title", webView.getTitle());
       event.putBoolean("canGoBack", webView.canGoBack());
       event.putBoolean("canGoForward", webView.canGoForward());
@@ -279,25 +273,13 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
 
     public void linkBridge() {
       if (messagingEnabled) {
-        if (ReactBuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-          // See isNative in lodash
-          String testPostMessageNative = "String(window.postMessage) === String(Object.hasOwnProperty).replace('hasOwnProperty', 'postMessage')";
-          evaluateJavascript(testPostMessageNative, new ValueCallback<String>() {
-            @Override
-            public void onReceiveValue(String value) {
-              if (value.equals("true")) {
-                FLog.w(ReactConstants.TAG, "Setting onMessage on a WebView overrides existing values of window.postMessage, but a previous value was defined");
-              }
-            }
-          });
-        }
-
-        loadUrl("javascript:(" +
-          "window.originalPostMessage = window.postMessage," +
+        loadUrl("javascript:(function () {\n" +
+          "if (window.originalPostMessage) return;" +
+          "window.originalPostMessage = window.postMessage;" +
           "window.postMessage = function(data) {" +
             BRIDGE_NAME + ".postMessage(String(data));" +
-          "}" +
-        ")");
+          "};" +
+        "\n})();");
       }
     }
 
