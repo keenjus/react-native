@@ -29,6 +29,7 @@ import android.webkit.GeolocationPermissions;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.WebSettings;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 
@@ -338,6 +339,9 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
     webView.getSettings().setBuiltInZoomControls(true);
     webView.getSettings().setDisplayZoomControls(false);
     webView.getSettings().setDomStorageEnabled(true);
+		webView.getSettings().setMixedContent(MIXED_CONTENT_ALWAYS_ALLOW);
+		webView.getSettings().setAllowFileAccessFromFileURLs(true);
+		webView.getSettings().setAllowUniversalAccessFromFileURLs(true);
 
     // Fixes broken full-screen modals/galleries due to body height being 0.
     webView.setLayoutParams(
