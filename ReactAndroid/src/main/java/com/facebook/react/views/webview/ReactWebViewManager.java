@@ -339,7 +339,7 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
     webView.getSettings().setBuiltInZoomControls(true);
     webView.getSettings().setDisplayZoomControls(false);
     webView.getSettings().setDomStorageEnabled(true);
-		webView.getSettings().setMixedContent(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+		webView.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
 		webView.getSettings().setAllowFileAccessFromFileURLs(true);
 		webView.getSettings().setAllowUniversalAccessFromFileURLs(true);
 
