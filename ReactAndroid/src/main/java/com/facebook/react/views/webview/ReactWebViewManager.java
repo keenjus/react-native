@@ -29,6 +29,7 @@ import android.webkit.GeolocationPermissions;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.WebSettings;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
@@ -117,8 +118,8 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
 
       if (!mLastLoadFailed) {
         ReactWebView reactWebView = (ReactWebView) webView;
-        reactWebView.callInjectedJavaScript();
         reactWebView.linkBridge();
+        reactWebView.callInjectedJavaScript();
         emitFinishEvent(webView, url);
       }
     }
@@ -286,19 +287,6 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
 
     public void linkBridge() {
       if (messagingEnabled) {
-        if (ReactBuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-          // See isNative in lodash
-          String testPostMessageNative = "String(window.postMessage) === String(Object.hasOwnProperty).replace('hasOwnProperty', 'postMessage')";
-          evaluateJavascript(testPostMessageNative, new ValueCallback<String>() {
-            @Override
-            public void onReceiveValue(String value) {
-              if (value.equals("true")) {
-                FLog.w(ReactConstants.TAG, "Setting onMessage on a WebView overrides existing values of window.postMessage, but a previous value was defined");
-              }
-            }
-          });
-        }
-
         loadUrl("javascript:(" +
           "window.originalPostMessage = window.postMessage," +
           "window.postMessage = function(data) {" +
@@ -361,6 +349,11 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
     webView.getSettings().setBuiltInZoomControls(true);
     webView.getSettings().setDisplayZoomControls(false);
     webView.getSettings().setDomStorageEnabled(true);
+ 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+ 		  webView.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+    }
+ 		webView.getSettings().setAllowFileAccessFromFileURLs(true);
+ 		webView.getSettings().setAllowUniversalAccessFromFileURLs(true);
 
     // Fixes broken full-screen modals/galleries due to body height being 0.
     webView.setLayoutParams(
