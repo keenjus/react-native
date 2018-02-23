@@ -155,6 +155,31 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
             (url.startsWith("http://") || url.startsWith("https://") ||
             url.startsWith("file://") || url.equals("about:blank"))) {
           return false;
+        } else if (url.startsWith("intent://")) {
+                   try {
+            Context context = view.getContext();
+            Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
+
+            if (intent != null) {
+              view.stopLoading();
+
+              PackageManager packageManager = context.getPackageManager();
+              ResolveInfo info = packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
+
+              if (info != null) {
+                context.startActivity(intent);
+              } else {
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://play.google.com/store/apps/details?id=com.facebook.katana"));
+                context.startActivity(browserIntent);
+              }
+
+              return true;
+            }
+          } catch (URISyntaxException e) {
+            FLog.w(ReactConstants.TAG, "Can't resolve intent://", e);
+          }
+
+          return true;
         } else {
           try {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
