@@ -150,16 +150,17 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
               view.stopLoading();
 
               PackageManager packageManager = context.getPackageManager();
-              ResolveInfo info = packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
+              try {
+                packageManager.getPackageInfo(intent.getPackage(), 0);
+                ResolveInfo info = packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
 
-              if (info != null) {
-                context.startActivity(intent);
-              } else {
-                //temporary
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://play.google.com/store/apps/details?id=com.facebook.katana"));
+                if (info != null) {
+                  context.startActivity(intent);
+                }
+              } catch (PackageManager.NameNotFoundException e) {
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://play.google.com/store/apps/details?id=" + intent.getPackage()));
                 context.startActivity(browserIntent);
               }
-
               return true;
             }
           } catch (URISyntaxException e) {
